@@ -116,11 +116,18 @@ function registerPipeline (options, pipeline) {
   debug('registering pipeline: method', method)
 
   function handleError (msg, err) {
-    debug('error handling message with cid ', msg.cid);
+    debug('error handling message with cid %s and ack %s', msg.cid, firstHandler.ack);
+    debug('msg %j', msg);
     debug(err.stack || err.message || err);
-    if (firstHandler.ack) msg.handle.reject(function () {
+    if (firstHandler.ack && msg.handle.reject) {
+      msg.handle.reject(function () {
+        debug('rejected message with cid ', msg.cid)
+        throw err;
+      })
+    } else {
+      debug('Message failed but no reject handler available!')
       throw err;
-    });
+    };
   }
 
   function handleIncomingMessage (pipeline, msg, message) {
